@@ -1,12 +1,23 @@
 # import_bookmarks_from_chrome_to_safari
 
-Inspiration comes from: <https://www.v2ex.com/t/230009>
+Record the ways which I use to import the bookmarks of Chrome to Safari.
+
+And then Safari would sync the bookmarks to iclouds, then you can get thems in your iphone and ipad!
+
+
+## import_bookmark.py
+
+A better way to import booksmark without running Safari.
+
+### Require
+
+biplist
+
 
 ## import_bookmarks.applescript
 
 A applescript to import bookmarks from Chrome to Safari.
 
-and then Safari would sync the bookmarks to iclouds, then you can get thems in your iphone and ipad!
 
 
 ## Bookmarks Synchroner.app
