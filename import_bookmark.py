@@ -1,11 +1,12 @@
 # !/usr/bin/env python
-# coding=utf-8
+# -*- coding: utf-8 -*-
 #
 # FileName:      import_bookmark.py
 # Author:        binss
-# Create:        2015-10-25 12:48:38
+# Create:        2016-05-04 12:20:43
 # Description:   No Description
 #
+
 
 from biplist import *
 import json
@@ -49,7 +50,7 @@ class BookmarkManager:
             bookmarks = []
             number = 0
             for raw_dict in raw_list:
-                if "meta_info" in raw_dict:
+                if "children" in raw_dict and len(raw_dict["children"]):
                     children, children_num = load_bookmark(raw_dict["children"])
                     directory = {"name": raw_dict["name"], "children": children}
                     bookmarks.append(directory)
@@ -115,7 +116,4 @@ def main():
 
 if __name__ == '__main__':
     sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "site-packages"))
-    try:
-        main()
-    except Exception, e:
-        print "[ERROR]: Exception:%s" % e
+    main()
