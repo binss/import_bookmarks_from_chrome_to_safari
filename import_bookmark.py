@@ -16,17 +16,6 @@ import sys
 import shutil
 
 
-def byteify(input):
-    if isinstance(input, dict):
-        return {byteify(key): byteify(value) for key, value in input.iteritems()}
-    elif isinstance(input, list):
-        return [byteify(element) for element in input]
-    elif isinstance(input, unicode):
-        return input.encode('utf-8')
-    else:
-        return input
-
-
 def parse_chrome_time(raw):
     if isinstance(raw, str):
         raw = int(raw)
@@ -79,7 +68,9 @@ class BookmarkManager:
                     bookmarks.append(bookmark)
             return bookmarks
 
-        origin_raw["Children"][1]["Children"] = save_bookmark(self.bookmarks)
+        for children in origin_raw["Children"]:
+            if children.get('Title') == "BookmarksBar" and "Children" in children:
+                children["Children"] = save_bookmark(self.bookmarks)
 
     def get_number(self):
         return self.number
