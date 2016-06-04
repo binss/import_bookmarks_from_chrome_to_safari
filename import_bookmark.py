@@ -35,42 +35,56 @@ class BookmarkManager:
         self.number = 0
 
     def load_from_chrome(self, raw):
-        def load_bookmark(raw_list):
+        def load_bookmark(folder):
             bookmarks = []
             number = 0
-            for raw_dict in raw_list:
-                if "children" in raw_dict and len(raw_dict["children"]):
-                    children, children_num = load_bookmark(raw_dict["children"])
-                    directory = {"name": raw_dict["name"], "children": children}
-                    bookmarks.append(directory)
-                    number += children_num
-                else:
-                    bookmark = {"name": raw_dict["name"], "url": raw_dict["url"], "time": parse_chrome_time(raw_dict["date_added"])}
-                    bookmarks.append(bookmark)
-                    number += 1
+            children = folder.get("children")
+            if children:
+                for child in children:
+                    if child["type"] == "folder":
+                        children, children_num = load_bookmark(child)
+                        bookmarks.append({"name": child["name"], "children": children})
+                        number += children_num
+                    else:
+                        bookmark = {"name": child["name"], "url": child["url"], "time": parse_chrome_time(child["date_added"])}
+                        bookmarks.append(bookmark)
+                        number += 1
             return bookmarks, number
 
-        raw_list = raw["roots"]["bookmark_bar"]["children"]
-        new_bookmarks, new_number = load_bookmark(raw_list)
-        self.bookmarks = self.bookmarks + new_bookmarks
-        self.number = self.number + new_number
+        root = raw["roots"]
+        bookmark_bar = root.get("bookmark_bar")
+        if bookmark_bar:
+            self.bookmarks, self.number = load_bookmark(bookmark_bar)
+        others = root.get("other")
+        if others:
+            new_bookmarks, new_number = load_bookmark(others)
+            self.bookmarks = self.bookmarks + new_bookmarks
+            self.number = self.number + new_number
 
 
-    def save_to_safari(self, origin_raw):
-        def save_bookmark(data_list):
+    def save_to_safari(self, raw):
+        def save_bookmark(children):
             bookmarks = []
-            for data_dict in data_list:
-                if "children" in data_dict:
-                    directory = {"WebBookmarkType": "WebBookmarkTypeList", "Title": data_dict["name"], "Children": save_bookmark(data_dict["children"])}
+            for child in children:
+                if "children" in child:
+                    directory = {"WebBookmarkType": "WebBookmarkTypeList", "Title": child["name"], "Children": save_bookmark(child["children"])}
                     bookmarks.append(directory)
                 else:
-                    bookmark = {"WebBookmarkType": "WebBookmarkTypeLeaf", "URIDictionary": {"title": data_dict["name"]}, "URLString": data_dict["url"]}
+                    bookmark = {"WebBookmarkType": "WebBookmarkTypeLeaf", "URIDictionary": {"title": child["name"]}, "URLString": child["url"]}
                     bookmarks.append(bookmark)
             return bookmarks
 
-        for children in origin_raw["Children"]:
-            if children.get('Title') == "BookmarksBar" and "Children" in children:
+        if self.number is 0:
+            print "[Error]No bookmark to be imported"
+            return
+
+        found = False
+        for children in raw["Children"]:
+            if children.get('Title') == "BookmarksBar":
                 children["Children"] = save_bookmark(self.bookmarks)
+                found = True
+        if not found:
+            print "[Error]Cannot find bookmark folder of Safari"
 
     def get_number(self):
         return self.number
@@ -102,7 +116,7 @@ def main():
     # create backup
     shutil.copyfile(safari_path, safari_path + ".bak")
     writePlist(safari_info, safari_path)
-    print "Done"
+    print "Done! %i bookmarks have been imported" % bookmark_manager.get_number()
 
 
 if __name__ == '__main__':
